@@ -134,8 +134,43 @@ u o m p = ( o, Instruction m p (\as -> debug ("Unimplemented instruction " ++ m)
 
 -- OP TABLE
 
+type AluFunc = Word16 -> Word16 -> Emu Word16
+
+aluFuncs :: [ ( Word8, String, AluFunc )]
+aluFuncs =
+  [ ( 0x40, "ADD", undefined )
+  , ( 0x50, "SUB", undefined )
+  , ( 0x60, "AND", undefined )
+  , ( 0x70, "OR",  undefined )
+  , ( 0x80, "XOR", undefined )
+  , ( 0x90, "MUL", undefined )
+  , ( 0xA0, "DIV", undefined )
+  ]
+
+genModes :: Word8 -> String -> AluFunc -> [ ( Word8, Instruction ) ]
+genModes o m f =
+  [ i o (m ++ "I") (r x // imm) $ \rx v' -> do
+      v <- load16 rx
+      r <- f v v'
+      save16 rx r
+  , i (o + 1) m (r x // r y) $ \rx ry -> do
+      v  <- load16 rx
+      v' <- load16 ry
+      r  <- f v v'
+      save16 rx r
+  , i (o + 2) m (r x // r y // r z) $ \rx ry rz -> do
+      v  <- load16 rx
+      v' <- load16 ry
+      r  <- f v v'
+      save16 rz r
+  ]
+
+aluOps = do
+  ( o, m, f ) <- aluFuncs
+  genModes o m f 
+
 ops :: Array Word8 Instruction
-ops = array (0x00, 0xD1)
+ops = array (0x00, 0xD1) (
   [ i 0x00 "NOP" nullary nop
   , u 0x01 "CLS" nullary
   , u 0x02 "VBLNK" nullary
@@ -187,7 +222,7 @@ ops = array (0x00, 0xD1)
 
   , u 0xD0 "PAL" imm
   , u 0xD1 "PAL" (r x)
-  ]
+  ] ++ aluOps)
 
 nop :: Emu ()
 nop = return ()

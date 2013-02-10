@@ -2,6 +2,7 @@
 
 module HChip.Machine where
 
+import Control.Applicative
 import Control.Monad.Random
 import Control.Monad.State
 import Data.Array.IO
@@ -12,7 +13,7 @@ import System.Exit
 import HChip.Util
 
 newtype Emu a = Emu { runEmu :: RandT StdGen (StateT EmuState IO) a }
-  deriving (Monad, MonadState EmuState, MonadIO, MonadRandom, Functor)
+  deriving (Monad, MonadState EmuState, MonadIO, MonadRandom, Functor, Applicative)
 
 data EmuState = EmuState
   { pc :: Word16
