@@ -13,6 +13,7 @@ import qualified Data.ByteString.Lazy as BSL
 import Data.Bits
 import Data.Digest.CRC32
 import Data.Word
+import Text.Printf
 
 data Assembly = Assembly
   { version :: (Word8, Word8)
@@ -24,7 +25,7 @@ parseAssembly :: Get Assembly
 parseAssembly = do
   magic <- getBytes 4
   unless (magic == "CH16") $ fail "Invalid magic string."
-  skip 4
+  skip 1
   versionByte <- getWord8
   romSize <- getWord32le
   pc <- getWord16le

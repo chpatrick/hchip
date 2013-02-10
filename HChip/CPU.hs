@@ -113,14 +113,6 @@ instance Disasm Bool where
   disasm False = "0"
   disasm True  = "1"
 
-showAll :: Args ts -> [ String ]
-showAll (x ::: xs) = disasm x : showAll xs
-showAll Nil = []
-
-disassemble :: Instruction -> InstructionBytes -> String
-disassemble Instruction { mnemonic = m, parser = p } ib
-  = m ++ " " ++ (intercalate ", " $ showAll $ p ib)
-
 -- INSTRUCTIONS
 
 data Instruction = forall ts. Instruction

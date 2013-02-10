@@ -7,5 +7,5 @@ Build-Type:          Simple
 Cabal-Version:       >=1.2
 
 Library
-  Build-Depends:     digest
+  Build-Depends:     digest, binary
   ghc-options:       -Wall
