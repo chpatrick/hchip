@@ -1,0 +1,11 @@
+Name:                hchip
+Version:             0.1
+Description:         Chip16 emulator
+Author:              Patrick Chilton
+Maintainer:          chpatrick@gmail.com
+Build-Type:          Simple
+Cabal-Version:       >=1.2
+
+Library
+  Build-Depends:     digest
+  ghc-options:       -Wall
