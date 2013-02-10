@@ -65,8 +65,9 @@ nibbleP :: Int -> UnaryParser Word8
 nibbleP n i
   = (if n .&. 1 == 1 then lowNibble else highNibble) (i !! (n `shiftR` 1)) ::: Nil
 
-x = nibbleP 1
 y = nibbleP 0
+x = nibbleP 1
+z = nibbleP 3
 
 imm :: UnaryParser Word16
 imm i = buildInt (tail i) ::: Nil
@@ -81,6 +82,12 @@ c x = const (x ::: Nil)
 
 mem :: UnaryParser Memory
 mem = mapArg Mem .imm
+
+b :: Int -> Int -> UnaryParser Bool
+b byte bit i = testBit (i !! byte) bit ::: Nil
+
+ad :: UnaryParser Word8
+ad i = (i !! 0) ::: Nil
 
 -- DISASSEMBLY
 
@@ -102,6 +109,10 @@ instance Disasm SP where
 instance Disasm Memory where
   disasm (Mem a) = printf "#%04x" a
 
+instance Disasm Bool where
+  disasm False = "0"
+  disasm True  = "1"
+
 showAll :: Args ts -> [ String ]
 showAll (x ::: xs) = disasm x : showAll xs
 showAll Nil = []
@@ -118,16 +129,34 @@ data Instruction = forall ts. Instruction
   , exec     :: Args ts -> Emu ()
   }
 
-i o m p e = ( o,  Instruction m p (toArgs e) )
+i o m p e = ( o, Instruction m p (toArgs e) )
+u o m p = ( o, Instruction m p (\as -> debug ("Unimplemented instruction " ++ m) >> quit) )
 
 -- OP TABLE
 
 ops :: Array Word8 Instruction
 ops = array (0x00, 0xD1)
   [ i 0x00 "NOP" nullary nop
+  , u 0x01 "CLS" nullary
+  , u 0x02 "VBLNK" nullary
+  , u 0x03 "BGC" z
+  , u 0x04 "SPR" imm
+  , u 0x05 "DRW" (r y // r x // imm)
+  , u 0x06 "DRW" (r y // r x // r z)
   , i 0x07 "RND" (r x // imm) (\rx max -> getRandomR (0, max + 1) >>= save16 rx)
 
+  , u 0x08 "FLIP" (b 2 1 // b 2 0)
+
+  , u 0x09 "SND0" nullary
+  , u 0x0A "SND1" imm
+  , u 0x0B "SND2" imm
+  , u 0x0C "SND3" imm
+  , u 0x0D "SNP" (r x // imm)
+
+  , u 0x0E "SNG" (ad // imm)
+
   , i 0x10 "JMP" imm jmp
+  , u 0x12 "J" (x // imm) -- needs custom printer
   , i 0x13 "JME" (r x // r y // imm) $ \rx ry a -> do
     vx <- load16 rx
     vy <- load16 ry
@@ -136,7 +165,8 @@ ops = array (0x00, 0xD1)
 
   , i 0x14 "CALL" imm call
   , i 0x15 "RET" nullary (pop >>= jmp)
-  , i 0x18 "RET" (r x) (load16 >=> call)
+  , u 0x17 "C" (x // imm) 
+  , i 0x18 "CALL" (r x) (load16 >=> call)
 
   , i 0x20 "LDI" (r x // imm) save16
   , i 0x21 "LDI" (c SP // imm) save16
@@ -154,6 +184,9 @@ ops = array (0x00, 0xD1)
   , i 0xC3 "POPALL" nullary (forM_ [0xf,0xe..0x0] (\r -> pop >>= save16 (Reg r)))
   , i 0xC4 "PUSHF" nullary (fmap fromIntegral (load8 Flags) >>= push)
   , i 0xC5 "POPF" nullary (fmap fromIntegral pop >>= save8 Flags)
+
+  , u 0xD0 "PAL" imm
+  , u 0xD1 "PAL" (r x)
   ]
 
 nop :: Emu ()

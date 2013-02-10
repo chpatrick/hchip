@@ -7,6 +7,7 @@ import Control.Monad.State
 import Data.Array.IO
 import Data.Bits
 import Data.Word
+import System.Exit
 
 import HChip.Util
 
@@ -87,3 +88,9 @@ instance Savable16 Memory where
   save16 (Mem a) v = do
     save8 (Mem a) (fromIntegral (v .&. 0xFF) :: Word8)
     save8 (Mem (a + 1)) (fromIntegral (v `shiftR` 8) :: Word8)
+
+debug :: String -> Emu ()
+debug = liftIO . putStrLn
+
+quit :: Emu ()
+quit = liftIO $ exitSuccess
