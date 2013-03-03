@@ -17,8 +17,7 @@ import HChip.Util
 
 main' f = do
   rom <- BSL.readFile f
-  a <- runGet' parseAssembly rom
-  case a of
+  case loadAssembly rom of
   	Left e -> putStrLn ("Problem parsing ROM: " ++ e)
   	Right (Assembly (major, minor) pc rom) -> do
   		printf "Version: %d.%d\n" major minor

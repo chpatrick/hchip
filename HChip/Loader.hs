@@ -23,22 +23,18 @@ data Assembly = Assembly
 
 parseAssembly :: Get Assembly
 parseAssembly = do
-  magic <- getBytes 4
+  magic <- getByteString 4
   unless (magic == "CH16") $ fail "Invalid magic string."
   skip 1
   versionByte <- getWord8
   romSize <- getWord32le
   pc <- getWord16le
   crc <- getWord32le
-  rom <- getBytes (fromIntegral romSize)
+  rom <- getByteString (fromIntegral romSize)
   unless (crc32 rom == crc) $ fail "Invalid checksum."
   return $ Assembly (highNibble versionByte, lowNibble versionByte) pc rom
 
--- ugly wrapper due to Get using fail
-runGet' :: Get a -> BSL.ByteString -> IO (Either String a)
-runGet' p s
-  = catch (fmap Right $ evaluate $ runGet p s) wrap
-    where
-      wrap :: SomeException -> IO (Either String a)
-      wrap = return . Left . show
-
+loadAssembly :: BSL.ByteString -> Either String Assembly
+loadAssembly bs = case runGetOrFail parseAssembly bs of
+  Left (_, _, e) -> Left e
+  Right (_, _, a) -> Right a
