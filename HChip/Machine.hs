@@ -7,6 +7,7 @@ import Control.Monad.Random
 import Control.Monad.State
 import Data.Array.IO
 import Data.Bits
+import Control.Lens
 import Data.Word
 import System.Exit
 
@@ -16,12 +17,14 @@ newtype Emu a = Emu { runEmu :: RandT StdGen (StateT EmuState IO) a }
   deriving (Monad, MonadState EmuState, MonadIO, MonadRandom, Functor, Applicative)
 
 data EmuState = EmuState
-  { pc :: Word16
-  , sp :: Word16
-  , flags :: Word8
+  { _pc :: Word16
+  , _sp :: Word16
+  , _flags :: Word8
   , regs :: IOUArray Word8 Word16
   , memory :: IOUArray Word16 Word8
   }
+
+makeLenses ''EmuState
 
 class Loadable8 a where
   load8 :: a -> Emu Word8
@@ -52,22 +55,22 @@ instance Savable16 Register where
     liftIO $ writeArray rs n v
 
 instance Loadable16 PC where
-  load16 PC = gets pc
+  load16 PC = use pc
 
 instance Savable16 PC where
-  save16 PC a = modify $ \s -> s { pc = a }
+  save16 PC = assign pc
 
 instance Loadable16 SP where
-  load16 SP = gets sp
+  load16 SP = use sp
 
 instance Savable16 SP where
-  save16 SP a = modify $ \s -> s { sp = a }
+  save16 SP = assign pc
 
 instance Loadable8 Flags where
-  load8 Flags = gets flags
+  load8 Flags = use flags
 
 instance Savable8 Flags where
-  save8 Flags f = modify $ \s -> s { flags = f }
+  save8 Flags = assign flags
 
 instance Loadable8 Memory where
   load8 (Mem a) = do
