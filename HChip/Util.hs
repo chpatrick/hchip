@@ -3,6 +3,7 @@
 module HChip.Util where
 
 import Control.Exception
+import Control.Lens
 import Data.Array.IArray
 import Data.Array.MArray
 import Data.Bits

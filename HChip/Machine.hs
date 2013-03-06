@@ -3,11 +3,12 @@
 module HChip.Machine where
 
 import Control.Applicative
+import Control.Lens
 import Control.Monad.Random
 import Control.Monad.State
 import Data.Array.IO
 import Data.Bits
-import Control.Lens
+import Data.Bits.Lens
 import Data.Word
 import System.Exit
 
@@ -25,6 +26,19 @@ data EmuState = EmuState
   }
 
 makeLenses ''EmuState
+
+carry :: Simple Lens EmuState Bool
+carry = flags . bitAt 1
+
+zero :: Simple Lens EmuState Bool
+zero = flags . bitAt 2
+
+overflow :: Simple Lens EmuState Bool
+overflow = flags . bitAt 6
+
+negative :: Simple Lens EmuState Bool
+negative = flags . bitAt 7
+
 
 class Loadable8 a where
   load8 :: a -> Emu Word8
