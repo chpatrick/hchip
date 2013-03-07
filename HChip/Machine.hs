@@ -21,6 +21,10 @@ data EmuState = EmuState
   { _pc :: Word16
   , _sp :: Word16
   , _flags :: Word8
+  , _spriteFlip :: ( Bool, Bool )
+  , _bgc   :: Word8
+  , _spriteSize :: ( Word8, Word8 )
+  , _vblank :: Bool
   , regs :: IOUArray Word8 Word16
   , memory :: IOUArray Word16 Word8
   }
@@ -109,6 +113,3 @@ instance Savable16 Memory where
 
 debug :: String -> Emu ()
 debug = liftIO . putStrLn
-
-quit :: Emu ()
-quit = liftIO $ exitSuccess

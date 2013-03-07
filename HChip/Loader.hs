@@ -17,7 +17,7 @@ import Text.Printf
 
 data Assembly = Assembly
   { version :: (Word8, Word8)
-  , pc :: Word16
+  , start :: Word16
   , rom :: ByteString 
   } deriving (Show)
 
@@ -28,11 +28,11 @@ parseAssembly = do
   skip 1
   versionByte <- getWord8
   romSize <- getWord32le
-  pc <- getWord16le
+  start <- getWord16le
   crc <- getWord32le
   rom <- getByteString (fromIntegral romSize)
   unless (crc32 rom == crc) $ fail "Invalid checksum."
-  return $ Assembly (highNibble versionByte, lowNibble versionByte) pc rom
+  return $ Assembly (highNibble versionByte, lowNibble versionByte) start rom
 
 loadAssembly :: BSL.ByteString -> Either String Assembly
 loadAssembly bs = case runGetOrFail parseAssembly bs of

@@ -1,4 +1,4 @@
-{-# LANGUAGE DataKinds, GADTs, TypeOperators, KindSignatures, TypeFamilies, ExistentialQuantification, FlexibleInstances, MultiParamTypeClasses, FlexibleContexts #-}
+{-# LANGUAGE DataKinds, GADTs, TypeOperators, KindSignatures, TypeFamilies, ExistentialQuantification, FlexibleInstances, MultiParamTypeClasses, FlexibleContexts, FunctionalDependencies, UndecidableInstances #-}
 module HChip.CPU where
 
 import Control.Applicative
@@ -38,16 +38,15 @@ type instance Input (Identity r) = '[]
 
 type family Output f :: *
 type instance Output (a -> f) = Output f
-type instance Output (Emu r) = r
-type instance Output (Identity r) = r
+type instance Output (Emu r) = Emu r
 
-class (i ~ Input f, o ~ Output f) => ConvertArgs f i o where
-  toArgs :: f -> Args i -> Emu o
+class (i ~ Input f, o ~ Output f) => ConvertArgs f i o | i o -> f where
+  toArgs :: f -> Args i -> o
  
 instance (ConvertArgs f i o) => ConvertArgs (a -> f) (a ': i) o where
   toArgs f (a ::: as) = toArgs (f a) as
  
-instance ConvertArgs (Emu o) '[] o where
+instance ConvertArgs (Emu o) '[] (Emu o) where
   toArgs e Nil = e
 
 (+++) :: Args ts -> Args ts' -> Args (ts :+: ts')
@@ -70,6 +69,12 @@ nibbleP n i
 y = nibbleP 0
 x = nibbleP 1
 z = nibbleP 3
+
+ll :: UnaryParser Word8
+ll i = (i !! 1) ::: Nil
+
+hh :: UnaryParser Word8
+hh i = (i !! 2 ) ::: Nil
 
 imm :: UnaryParser Word16
 imm i = buildInt (tail i) ::: Nil
@@ -143,7 +148,7 @@ condPrinter m (c ::: as) = defaultPrinter (m : condName c) as
 
 p o pr p e = ( o, Instruction p pr (toArgs e ) )
 i o m p e = ( o, Instruction p (defaultPrinter m) (toArgs e) )
-u o m p = ( o, Instruction p (defaultPrinter m) (\_ -> debug ("Unimplemented instruction " ++ m) >> quit) )
+u o m p = ( o, Instruction p (defaultPrinter m) (\_ -> debug ("Unimplemented instruction " ++ m)) )
 
 conds :: Array Word8 (String, Emu Bool)
 conds = array (0x0, 0xF)
