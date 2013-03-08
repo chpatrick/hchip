@@ -18,12 +18,12 @@ ops = array (0x00, 0xD1) (
     v <- use vblank
     if v then vblank .= False else pc -= 4
   , i 0x03 "BGC" z (assign bgc)
-  , i 0x04 "SPR" (ll // hh) (\w h -> spriteSize .= ( w, h ))
+  , i 0x04 "SPR" (ll // hh) (curry (assign spriteSize))
   , i 0x05 "DRW" (r x // r y // imm) drw
   , i 0x06 "DRW" (r x // r y // r z) (\x y -> load16 >=> drw x y)
   , i 0x07 "RND" (r x // imm) (\rx m -> getRandomR (0, m + 1) >>= save16 rx)
 
-  , i 0x08 "FLIP" (b 2 1 // b 2 0) (\h v -> spriteFlip .= ( h, v ))
+  , i 0x08 "FLIP" (b 2 1 // b 2 0) (curry (assign spriteFlip))
 
   , u 0x09 "SND0" nullary
   , u 0x0A "SND1" imm

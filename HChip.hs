@@ -49,7 +49,7 @@ initSDL = do
 
 processEvents :: Emu Bool
 processEvents = do
-  e <- liftIO $ pollEvent
+  e <- liftIO pollEvent
   ( q, l ) <- case e of
     Quit -> return ( True, False )
     NoEvent -> return ( False, False )
@@ -59,7 +59,7 @@ processEvents = do
 mainLoop :: Emu ()
 mainLoop = do
   q <- processEvents
-  if q then return () else frame >> mainLoop
+  unless q (frame >> mainLoop)
 
 frame :: Emu ()
 frame = do
@@ -75,26 +75,26 @@ frame = do
 
 initState :: Assembly -> Surface -> IO EmuState
 initState Assembly { rom = rom, start = start } s = do
-	regs <- newArray (0x0, 0xf) 0
-	mem <- newListArray (0x0000, 0xFFFF) (BS.unpack rom ++ replicate (0x10000 - BS.length rom) 0)
+  regs <- newArray (0x0, 0xf) 0
+  mem <- newListArray (0x0000, 0xFFFF) (BS.unpack rom ++ replicate (0x10000 - BS.length rom) 0)
 
-	return EmuState
-		{ _pc = start
-		, _sp = 0xFDF0
-		, _flags = 0x0
+  return EmuState
+    { _pc = start
+    , _sp = 0xFDF0
+    , _flags = 0x0
     , _spriteFlip = ( False, False )
     , _spriteSize = ( 0, 0 )
     , _bgc = 0
     , _vblank = False
     , surface = s
-		, regs = regs
-		, memory = mem
-		}
+    , regs = regs
+    , memory = mem
+    }
 
 cpuStep = do
   p <- use pc
   pc += 4
-  (oc : ib) <- forM [0..3] (\o -> load8 (Mem (p + o)))	
+  (oc : ib) <- forM [0..3] (\o -> load8 (Mem (p + o)))  
   i <- liftIO (ops !? oc)
   case i of
     Nothing -> debug $ printf "<unimplemented %02x>" oc
