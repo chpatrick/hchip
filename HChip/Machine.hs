@@ -10,6 +10,7 @@ import Data.Array.IO
 import Data.Bits
 import Data.Bits.Lens
 import Data.Word
+import Graphics.UI.SDL
 import System.Exit
 
 import HChip.Util
@@ -25,6 +26,7 @@ data EmuState = EmuState
   , _bgc   :: Word8
   , _spriteSize :: ( Word8, Word8 )
   , _vblank :: Bool
+  , surface :: Surface
   , regs :: IOUArray Word8 Word16
   , memory :: IOUArray Word16 Word8
   }

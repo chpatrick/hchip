@@ -39,6 +39,7 @@ type instance Input (Identity r) = '[]
 type family Output f :: *
 type instance Output (a -> f) = Output f
 type instance Output (Emu r) = Emu r
+type instance Output (Identity r) = Identity r
 
 class (i ~ Input f, o ~ Output f) => ConvertArgs f i o | i o -> f where
   toArgs :: f -> Args i -> o
@@ -48,6 +49,9 @@ instance (ConvertArgs f i o) => ConvertArgs (a -> f) (a ': i) o where
  
 instance ConvertArgs (Emu o) '[] (Emu o) where
   toArgs e Nil = e
+
+instance ConvertArgs (Identity o) '[] (Identity o) where
+  toArgs i Nil = i
 
 (+++) :: Args ts -> Args ts' -> Args (ts :+: ts')
 Nil +++ ts = ts
