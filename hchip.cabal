@@ -6,6 +6,7 @@ Maintainer:          chpatrick@gmail.com
 Build-Type:          Simple
 Cabal-Version:       >=1.2
 
-Library
-  Build-Depends:     digest, binary
-  ghc-options:       -Wall
+Executable hchip
+  Main-Is:           HChip.hs
+  Build-Depends:     base, digest, binary > 0.7, lens, SDL, array, mtl, MonadRandom, bytestring, random, clock
+  ghc-options:       -Wall -O2

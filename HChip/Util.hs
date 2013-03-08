@@ -3,7 +3,6 @@
 module HChip.Util where
 
 import Control.Exception
-import Control.Lens
 import Data.Array.IArray
 import Data.Array.MArray
 import Data.Bits
@@ -32,4 +31,5 @@ sign = fromIntegral
 unsign :: Int16 -> Word16
 unsign = fromIntegral
 
+byte :: (Integral a, Bits a) => Int -> a -> Word8
 byte n x = fromIntegral ((x `shiftR` (n * 8)) .&. 0xFF)

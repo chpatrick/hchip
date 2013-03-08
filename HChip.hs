@@ -1,4 +1,4 @@
-module HChip where
+module Main where
 
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BSL
@@ -12,6 +12,8 @@ import Data.Array.IO
 import Data.Word
 import Graphics.UI.SDL as SDL
 import Text.Printf
+import System.Clock
+import System.Environment
 import System.Random
 
 import HChip.Loader
@@ -20,6 +22,12 @@ import HChip.CPU
 import HChip.Debug
 import HChip.Ops
 import HChip.Util
+
+main = do
+  fs <- getArgs
+  case fs of
+    [ f ] -> main' f
+    _ -> putStrLn "Usage: hchip <rom>"
 
 main' f = do
   rom <- BSL.readFile f
@@ -56,9 +64,14 @@ mainLoop = do
 frame :: Emu ()
 frame = do
   s <- gets surface
-  replicateM_ 1000 cpuStep
+  t1 <- liftIO $ getTime Monotonic
+  replicateM_ 16000 cpuStep
+  liftIO $ unlockSurface s
   liftIO $ SDL.flip s
+  liftIO $ lockSurface s
   vblank .= True
+  t2 <- liftIO $ getTime Monotonic
+  liftIO $ printf "%.2f FPS\n" ((1 :: Double) / (fromIntegral (nsec t2 - nsec t1) / 1e9))
 
 initState :: Assembly -> Surface -> IO EmuState
 initState Assembly { rom = rom, start = start } s = do
