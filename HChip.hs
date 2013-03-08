@@ -6,13 +6,14 @@ import Control.Lens
 import Control.Monad
 import Control.Monad.Identity
 import Control.Monad.Random
-import Control.Monad.State
+import Control.Monad.State.Strict
 import Control.Monad.Trans
 import Data.Array.IO
 import Data.Word
 import Graphics.UI.SDL as SDL
 import Text.Printf
 import System.Clock
+import System.IO
 import System.Environment
 import System.Random
 
@@ -38,6 +39,7 @@ main' f = do
       s <- initState a surf
       rng <- getStdGen
       evalStateT (evalRandT (runEmu mainLoop) rng) s
+      liftIO $ putStrLn ""
       quit
 
 initSDL :: IO Surface
@@ -71,7 +73,8 @@ frame = do
   liftIO $ lockSurface s
   vblank .= True
   t2 <- liftIO $ getTime Monotonic
-  liftIO $ printf "%.2f FPS\n" ((1 :: Double) / (fromIntegral (nsec t2 - nsec t1) / 1e9))
+  liftIO $ printf "\r%.2f FPS" ((1 :: Double) / (fromIntegral (nsec t2 - nsec t1) / 1e9))
+  liftIO $ hFlush stdout
 
 initState :: Assembly -> Surface -> IO EmuState
 initState Assembly { rom = rom, start = start } s = do
