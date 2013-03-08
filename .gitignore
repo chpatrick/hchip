@@ -1,2 +1,8 @@
 dist/
-
+*.prof
+*.hi
+*.ho
+*.o
+*.p_o
+*.p_hi
+.hsenv/
