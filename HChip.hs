@@ -127,4 +127,4 @@ defaultPalette = map toColor (
   , 0xBCDEE4 -- (Sky blue)
   , 0xFFFFFF -- (White)
   ] :: [ Word32 ]) where
-    toColor x = Color (byte 0 x) (byte 1 x) (byte 2 x)
+    toColor x = Color (byte 2 x) (byte 1 x) (byte 0 x)
