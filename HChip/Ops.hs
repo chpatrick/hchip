@@ -3,6 +3,7 @@ module HChip.Ops (ops) where
 import Data.Array hiding ((//))
 import Data.Word
 import Control.Lens
+import Control.Applicative
 import Control.Monad
 import Control.Monad.Random
 import HChip.Machine
@@ -17,7 +18,7 @@ ops = array (0x00, 0xD1) (
   , i 0x02 "VBLNK" nullary $ do
     v <- use vblank
     if v then vblank .= False else pc -= 4
-  , i 0x03 "BGC" z (assign bgc)
+  , i 0x03 "BGC" z (\b -> bgc .= b >> updatePalette)
   , i 0x04 "SPR" (ll // hh) (curry (assign spriteSize))
   , i 0x05 "DRW" (r x // r y // imm) drw
   , i 0x06 "DRW" (r x // r y // r z) (\x y -> load16 >=> drw x y)
@@ -72,7 +73,7 @@ nop = return ()
 
 jmp = save16 PC
 
-call a = load16 PC >>= push >> jmp a
+call a = subtract 4 <$> load16 PC >>= push >> jmp a
 
 ld x y = load16 y >>= save16 x
 

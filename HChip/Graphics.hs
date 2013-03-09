@@ -48,11 +48,18 @@ drw rx ry a = do
     setPixel scan0 pitch sx1 sy (highNibble pp)
     setPixel scan0 pitch sx2 sy (highNibble pp)
 
+updatePalette :: Emu ()
+updatePalette = do
+  b <- use bgc
+  p <- use palette
+  s <- gets surface
+  liftIO $ setColors s ((p !! (fromIntegral b)) : tail p) 0
+  return ()
+
 pal :: Word16 -> Emu ()
 pal a = do
   cs <- forM [0..15] $ \n -> do
     [ r, g, b ] <- forM [0..2] (\c -> load8 (Mem (a + n * 3 + c)))
     return (Color r g b)
-  s <- gets surface
-  liftIO $ setColors s cs 0
-  return ()
+  palette .= cs
+  updatePalette

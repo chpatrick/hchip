@@ -89,12 +89,13 @@ initState Assembly { rom = rom, start = start } s = do
     , _spriteSize = ( 0, 0 )
     , _bgc = 0
     , _vblank = False
+    , _palette = defaultPalette
     , surface = s
     , regs = regs
     , memory = mem
     }
 
-cpuStep = do
+cpuStep = {-# SCC "cpuStep" #-} do
   p <- use pc
   pc += 4
   (oc : ib) <- forM [0..3] (\o -> load8 (Mem (p + o)))  
