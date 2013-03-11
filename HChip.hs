@@ -69,7 +69,7 @@ frame = do
   fb <- gets frontBuffer
   bb <- gets backBuffer
   t1 <- liftIO $ getTime Monotonic
-  replicateM_ 16000 cpuStep
+  replicateM_ 4000 cpuStep
   liftIO $ unlockSurface bb
   liftIO $ blitSurface bb Nothing fb Nothing
   liftIO $ SDL.flip fb

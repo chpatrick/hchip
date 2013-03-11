@@ -9,9 +9,11 @@ import Data.Bits
 import Data.Int
 import Data.Word
 
+{-# INLINE lowNibble #-}
 lowNibble :: (Num a, Bits a) => a -> a
 lowNibble = (.&.)0xF
 
+{-# INLINE highNibble #-}
 highNibble :: (Num a, Bits a) => a -> a
 highNibble = lowNibble . (`shiftR`4)
 

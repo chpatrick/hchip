@@ -108,11 +108,12 @@ sh r x n
 
 -- FUNCTIONS
 
+-- undefined behavior on divide by zero
 div :: AluFunc
-div = signed $ \x y -> do
+div = signed $ \x y -> if x == 0 then return 0 else do
   let (q, r) = x `quotRem` y
   carry .= (r /= 0)
-  return r
+  return q
 
 mul :: AluFunc
 mul x y = do
