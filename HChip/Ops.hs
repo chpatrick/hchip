@@ -73,7 +73,7 @@ nop = return ()
 
 jmp = assign pc
 
-call a = subtract 4 <$> use pc >>= push >> jmp a
+call a = use pc >>= push >> jmp a
 
 ld x y = load16 y >>= save16 x
 

@@ -34,7 +34,7 @@ disassemble Instruction { parser = p, printer = pr } ib
 disasmLoop :: Word16 -> BS.ByteString -> IO ()
 disasmLoop a r = do
   let ( instr, next ) = BS.splitAt 4 r
-  when (BS.length instr > 4) $ do
+  when (BS.length instr == 4) $ do
     let Just ( opcode, body ) = BS.uncons instr
     i <- ops !? opcode
     let d = case i of {

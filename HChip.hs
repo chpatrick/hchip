@@ -101,7 +101,7 @@ initState Assembly { rom = rom, start = start } fb bb = do
 
 cpuStep = {-# SCC "cpuStep" #-} do
   p <- use pc
-  pc += 4
+  pc .= p + 4
   (oc : ib) <- forM [0..3] (\o -> load8 (Mem (p + o)))  
   i <- liftIO (ops !? oc)
   case i of
