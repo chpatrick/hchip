@@ -50,19 +50,19 @@ ops = array (0x00, 0xD1) (
   , i 0x20 "LDI" (r x // imm) save16
   , i 0x21 "LDI" (c SP // imm) save16
   , i 0x22 "LDM" (r x // mem) ld
-  , i 0x23 "LDM" (r x // r y) (\rx ry -> fmap Mem (load16 ry) >>= ld rx)
+  , i 0x23 "LDM" (r x // r y) (\rx ry -> Mem <$> load16 ry >>= ld rx)
   , i 0x24 "MOV" (r x // r y) ld
 
   , i 0x30 "STM" (r x // mem) stm
-  , i 0x31 "STM" (r x // r y) (\rx ry -> fmap Mem (load16 ry) >>= stm rx)
+  , i 0x31 "STM" (r x // r y) (\rx ry -> Mem <$> load16 ry >>= stm rx)
   
   , i 0xC0 "PUSH" (r x) (load16 >=> push)
   , i 0xC1 "POP" (r x) (\rx -> pop >>= save16 rx)
   -- TODO: very slight optimizations to these four
   , i 0xC2 "PUSHALL" nullary (forM_ [0x0..0xf] (\r -> load16 (Reg r) >>= push))
   , i 0xC3 "POPALL" nullary (forM_ [0xf,0xe..0x0] (\r -> pop >>= save16 (Reg r)))
-  , i 0xC4 "PUSHF" nullary (fmap fromIntegral (load8 Flags) >>= push)
-  , i 0xC5 "POPF" nullary (fmap fromIntegral pop >>= save8 Flags)
+  , i 0xC4 "PUSHF" nullary (fromIntegral <$> use flags >>= push)
+  , i 0xC5 "POPF" nullary (fromIntegral <$> pop >>= assign flags)
 
   , i 0xD0 "PAL" imm pal
   , i 0xD1 "PAL" (r x) (load16 >=> pal)
@@ -71,21 +71,21 @@ ops = array (0x00, 0xD1) (
 nop :: Emu ()
 nop = return ()
 
-jmp = save16 PC
+jmp = assign pc
 
-call a = subtract 4 <$> load16 PC >>= push >> jmp a
+call a = subtract 4 <$> use pc >>= push >> jmp a
 
 ld x y = load16 y >>= save16 x
 
 stm = flip ld
 
 push v = do
-  sp <- load16 SP
-  save16 (Mem sp) v
-  save16 SP (sp + 2)
+  sp' <- use sp
+  save16 (Mem sp') v
+  sp .= sp' + 2
 
 pop = do
-  sp <- load16 SP
-  r <- load16 (Mem (sp - 2))
-  save16 SP (sp - 2)
+  sp' <- subtract 2 <$> use sp
+  r <- load16 (Mem sp')
+  sp .= sp'
   return r
