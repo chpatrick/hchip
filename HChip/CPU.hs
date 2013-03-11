@@ -16,19 +16,11 @@ import HChip.Util
 
 -- CRAZY TYPE LEVEL STUFF
 
-data Args ts where
-  Nil :: Args '[]
-  (:::) :: a -> Args ts -> Args (a ': ts)
-
 -- type level concat
 type family (:+:) (l :: [*]) (k :: [*]) :: [*]
 type instance '[] :+: k = k
 type instance (a ': l) :+: k = a ': (l :+: k)
 
-infixr 4 :::
-
-type InstructionBytes = [ Word8 ]
-type InstructionParser ts = InstructionBytes -> Args ts
 type UnaryParser a = InstructionParser '[a]
 
 type family Input f :: [*]
@@ -135,14 +127,6 @@ instance (Disasm a, DisasmAll (Args as)) => DisasmAll (Args (a ': as)) where
 
 disasmArgs :: DisasmAll a => a -> String
 disasmArgs = intercalate ", " . disasmAll
-
--- INSTRUCTIONS
-
-data Instruction = forall ts. Instruction
-  { parser   :: InstructionParser ts
-  , printer  :: Args ts -> Identity String 
-  , exec     :: Args ts -> Emu ()
-  }
 
 defaultPrinter :: DisasmAll a => String -> a -> Identity String
 defaultPrinter m as = return (m ++ " " ++ disasmArgs as)

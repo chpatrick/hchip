@@ -83,6 +83,7 @@ initState :: Assembly -> Surface -> Surface -> IO EmuState
 initState Assembly { rom = rom, start = start } fb bb = do
   regs <- newArray (0x0, 0xf) 0
   mem <- newListArray (0x0000, 0xFFFF) (BS.unpack rom ++ replicate (0x10000 - BS.length rom) 0)
+  ot <- genOps
 
   return EmuState
     { _pc = start
@@ -97,13 +98,15 @@ initState Assembly { rom = rom, start = start } fb bb = do
     , backBuffer = bb
     , regs = regs
     , memory = mem
+    , opTable = ot
     }
 
 cpuStep = {-# SCC "cpuStep" #-} do
   p <- use pc
   pc .= p + 4
   (oc : ib) <- forM [0..3] (\o -> load8 (Mem (p + o)))  
-  i <- liftIO (ops !? oc)
+  ot <- gets opTable
+  i <- liftIO (readArray ot oc)
   case i of
     Nothing -> debug $ printf "<unimplemented %02x>" oc
     Just (Instruction { parser = p, exec = e, printer = pr }) -> do

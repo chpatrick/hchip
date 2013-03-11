@@ -1,9 +1,10 @@
-{-# LANGUAGE TemplateHaskell, MultiParamTypeClasses, GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE TemplateHaskell, MultiParamTypeClasses, GeneralizedNewtypeDeriving, ExistentialQuantification, DataKinds, TypeOperators, GADTs #-}
 
 module HChip.Machine where
 
 import Control.Applicative
 import Control.Lens
+import Control.Monad.Identity
 import Control.Monad.Random
 import Control.Monad.State.Strict
 import Data.Array.IO
@@ -16,6 +17,22 @@ import HChip.Util
 
 newtype Emu a = Emu { runEmu :: RandT StdGen (StateT EmuState IO) a }
   deriving (Monad, MonadState EmuState, MonadIO, MonadRandom, Functor, Applicative)
+
+-- INSTRUCTIONS
+data Args ts where
+  Nil :: Args '[]
+  (:::) :: a -> Args ts -> Args (a ': ts)
+
+infixr 4 :::
+
+type InstructionBytes = [ Word8 ]
+type InstructionParser ts = InstructionBytes -> Args ts
+
+data Instruction = forall ts. Instruction
+  { parser   :: InstructionParser ts
+  , printer  :: Args ts -> Identity String 
+  , exec     :: Args ts -> Emu ()
+  }
 
 data EmuState = EmuState
   { _pc :: !Word16
@@ -30,6 +47,7 @@ data EmuState = EmuState
   , backBuffer :: Surface
   , regs :: IOUArray Word8 Word16
   , memory :: IOUArray Word16 Word8
+  , opTable :: IOArray Word8 (Maybe Instruction)
   }
 
 makeLenses ''EmuState

@@ -1,6 +1,7 @@
-module HChip.Ops (ops) where
+module HChip.Ops (genOps) where
 
 import Data.Array hiding ((//))
+import Data.Array.IO
 import Data.Word
 import Control.Lens
 import Control.Applicative
@@ -11,8 +12,14 @@ import HChip.CPU
 import HChip.ALU
 import HChip.Graphics
 
-ops :: Array Word8 Instruction
-ops = array (0x00, 0xD1) (
+genOps :: IO (IOArray Word8 (Maybe Instruction))
+genOps = do
+  ot <- newArray (0x00, 0xFF) Nothing
+  forM_ ops (\(oc, i) -> oc `seq` i `seq` writeArray ot oc (Just i))
+  return ot
+
+ops :: [ ( Word8, Instruction ) ]
+ops = (
   [ i 0x00 "NOP" nullary (return ())
   , i 0x01 "CLS" nullary cls
   , i 0x02 "VBLNK" nullary $ do
