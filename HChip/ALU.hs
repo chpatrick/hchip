@@ -79,6 +79,9 @@ aluOps = (do
 expand :: Int16 -> Int32
 expand = fromIntegral
 
+expand' :: Word16 -> Word32
+expand' = fromIntegral
+
 compress :: Int32 -> Int16
 compress = fromIntegral
 
@@ -112,11 +115,11 @@ div = signed $ \x y -> do
   return r
 
 mul :: AluFunc
-mul = signed $ \x y -> do
-  let r = expand x * expand y
-  -- check if any of the higher bits have been flipped
-  carry .= (r `shiftR` 15 /= if pos r then 0 else (-1))
-  return $ compress r
+mul x y = do
+  let r = expand (sign x) * expand (sign y)
+  let ur = expand' x * expand' y
+  carry .= (ur > expand' maxBound)
+  return $ unsign $ compress r
 
 add :: AluFunc
 add = signed $ \x y -> do

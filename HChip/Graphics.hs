@@ -19,6 +19,7 @@ cls = do
   liftIO $ fillRect bb Nothing (Pixel 0)
   return ()
 
+{-# INLINE setPixel #-}
 setPixel :: Ptr Word8 -> Int -> Int -> Int -> Word8 -> Emu ()
 setPixel scan0 pitch x y c
   = when (x >= 0 && x < 320 && y >= 0 && y < 240 && c /= 0) $ do

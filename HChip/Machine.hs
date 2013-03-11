@@ -18,12 +18,12 @@ newtype Emu a = Emu { runEmu :: RandT StdGen (StateT EmuState IO) a }
   deriving (Monad, MonadState EmuState, MonadIO, MonadRandom, Functor, Applicative)
 
 data EmuState = EmuState
-  { _pc :: {-# UNPACK #-}!Word16
-  , _sp :: {-# UNPACK #-}!Word16
-  , _flags :: {-# UNPACK #-}!Word8
-  , _spriteFlip :: {-# UNPACK #-}!( Bool, Bool )
-  , _bgc   :: {-# UNPACK #-}!Word8
-  , _spriteSize :: {-# UNPACK #-}!( Word8, Word8 )
+  { _pc :: !Word16
+  , _sp :: !Word16
+  , _flags :: !Word8
+  , _spriteFlip :: !( Bool, Bool )
+  , _bgc   :: !Word8
+  , _spriteSize :: !( Word8, Word8 )
   , _vblank :: !Bool
   , _palette :: ![ Color ]
   , frontBuffer :: Surface

@@ -13,7 +13,7 @@ import HChip.Graphics
 
 ops :: Array Word8 Instruction
 ops = array (0x00, 0xD1) (
-  [ i 0x00 "NOP" nullary nop
+  [ i 0x00 "NOP" nullary (return ())
   , i 0x01 "CLS" nullary cls
   , i 0x02 "VBLNK" nullary $ do
     v <- use vblank
@@ -67,9 +67,6 @@ ops = array (0x00, 0xD1) (
   , i 0xD0 "PAL" imm pal
   , i 0xD1 "PAL" (r x) (load16 >=> pal)
   ] ++ aluOps)
-
-nop :: Emu ()
-nop = return ()
 
 jmp = assign pc
 
