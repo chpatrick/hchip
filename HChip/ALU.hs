@@ -49,29 +49,28 @@ genModes o m f =
   , i (o + 2) m (r x // r y // r z) (resultRegs f)
   ]
 
-shifts =
-  [ ( 0, "SHL", pureFunc (sh False) )
-  , ( 1, "SHR", pureFunc (sh True) )
-  , ( 2, "SAL", signed $ pureFunc (sh False) )
-  , ( 3, "SAR", signed $ pureFunc (sh True) )
-  ]
+sh r = pureFunc (\x n -> shift x (fromIntegral (n .&. 0xf) * if r then (-1) else 1))
 
 genShifts oo m f = 
   [ i (0xB0 + oo) m (r x // imm) (updateImm f)
-  , i (0xB3 + oo) m (r x // r y) (updateReg f)
+  , i (0xB4 + oo) m (r x // r y) (updateReg f)
   ]
 
 aluOps = (do
   ( o, m, f ) <- aluFuncs
-  genModes o m f) ++ (do
-    ( oo, m, f ) <- shifts
-    genShifts oo m f
-    ) ++
+  genModes o m f) ++
   [ i 0x53 "CMPI" (r x // imm) $ \rx v' -> void (wrap sub rx v')
   , i 0x54 "CMP"  (r x // r y) $ \rx ry -> void (wrap sub rx ry)
 
   , i 0x63 "TSTI" (r x // imm) $ \rx v' -> void (wrap and rx v')
   , i 0x64 "TST"  (r x // r y) $ \rx ry -> void (wrap and rx ry)
+
+  , i 0xB0 "SHL"  (r x // imm) (updateImm (sh False))
+  , i 0xB1 "SHR"  (r x // imm) (updateImm (sh True))
+  , i 0xB2 "SAR"  (r x // imm) (updateImm (signed (sh True)))
+  , i 0xB3 "SHL"  (r x // r y) (updateReg (sh False))
+  , i 0xB4 "SHR"  (r x // r y) (updateReg (sh True))
+  , i 0xB5 "SAR"  (r x // r y) (updateReg (signed (sh True)))
   ]
 
 -- UTILITIES
@@ -101,10 +100,6 @@ pureFunc f x x' = return (f x x')
 
 checkZero x = zero .= (x == 0)
 checkNegative x = negative .= (sign x < 0)
-
-sh :: (Integral a, Bits a) => Bool -> a -> a -> a
-sh r x n
-  = shift x (fromIntegral (n .&. 0xf) * if r then (-1) else 1)
 
 -- FUNCTIONS
 
