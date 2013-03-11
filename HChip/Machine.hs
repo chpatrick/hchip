@@ -52,6 +52,8 @@ data EmuState = EmuState
 
 makeLenses ''EmuState
 
+-- FLAG LENSES
+
 carry :: Simple Lens EmuState Bool
 carry = flags . bitAt 1
 
@@ -64,6 +66,24 @@ overflow = flags . bitAt 6
 negative :: Simple Lens EmuState Bool
 negative = flags . bitAt 7
 
+-- PAD LENSES
+
+padUp :: Simple Lens Word8 Bool
+padUp = bitAt 0
+padDown :: Simple Lens Word8 Bool
+padDown = bitAt 1
+padLeft :: Simple Lens Word8 Bool
+padLeft = bitAt 2
+padRight :: Simple Lens Word8 Bool
+padRight = bitAt 3
+padSelect :: Simple Lens Word8 Bool
+padSelect = bitAt 4
+padStart :: Simple Lens Word8 Bool
+padStart = bitAt 5
+padA :: Simple Lens Word8 Bool
+padA = bitAt 6
+padB :: Simple Lens Word8 Bool
+padB = bitAt 7
 
 class Loadable8 a where
   load8 :: a -> Emu Word8
@@ -117,7 +137,7 @@ instance Loadable8 Memory where
     liftIO $ readArray m a
 
 instance Savable8 Memory where
-  save8 (Mem a) v = do
+  save8 (Mem a) v = when (a < 0xFFF0) $ do -- no writing to IO ports
     m <- gets memory
     liftIO $ writeArray m a v
 

@@ -1,3 +1,5 @@
+{-# LANGUAGE StandaloneDeriving #-}
+
 module Main where
 
 import qualified Data.ByteString as BS
@@ -50,12 +52,33 @@ initSDL = do
   setColors bb defaultPalette 0
   return ( fb, bb )
 
+setPad :: Bool -> Keysym -> Emu ()
+setPad s (Keysym k _ _) = let l = case k of {
+  ; SDLK_UP -> Just padUp
+  ; SDLK_RIGHT -> Just padRight
+  ; SDLK_DOWN -> Just padDown
+  ; SDLK_LEFT -> Just padLeft
+  ; SDLK_q -> Just padStart
+  ; SDLK_w -> Just padSelect
+  ; SDLK_x -> Just padB
+  ; SDLK_z -> Just padA
+  ; _ -> Nothing
+  }
+  in case l of
+    Nothing -> return ()
+    Just l -> do
+      m <- gets memory
+      p <- liftIO $ readArray m 0xFFF0
+      liftIO $ writeArray m 0xFFF0 (p & l .~ s)
+
 processEvents :: Emu Bool
 processEvents = do
   e <- liftIO pollEvent
   ( q, l ) <- case e of
     Quit -> return ( True, False )
     NoEvent -> return ( False, False )
+    KeyDown k -> setPad True k >> return ( False, True )
+    KeyUp k -> setPad False k >> return ( False, True )
     _ -> return ( False, True )
   if l then processEvents else return q
 
