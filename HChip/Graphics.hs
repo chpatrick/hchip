@@ -15,8 +15,8 @@ import HChip.Util
 
 cls :: Emu ()
 cls = do
-  s <- gets surface
-  liftIO $ fillRect s Nothing (Pixel 0)
+  bb <- gets backBuffer
+  liftIO $ fillRect bb Nothing (Pixel 0)
   return ()
 
 setPixel :: Ptr Word8 -> Int -> Int -> Int -> Word8 -> Emu ()
@@ -35,7 +35,7 @@ drw rx ry a = do
   x0 <- sign <$> load16 rx
   y0 <- sign <$> load16 ry
   ( w, h ) <- use spriteSize
-  s <- gets surface
+  s <- gets backBuffer
   scan0 <- castPtr <$> liftIO (surfaceGetPixels s)
   let pitch = fromIntegral $ surfaceGetPitch s
   ( fh, fv ) <- use spriteFlip
@@ -52,8 +52,10 @@ updatePalette :: Emu ()
 updatePalette = do
   b <- use bgc
   p <- use palette
-  s <- gets surface
-  liftIO $ setColors s ((p !! (fromIntegral b)) : tail p) 0
+  fb <- gets frontBuffer
+  bb <- gets backBuffer
+  let hp  = ((p !! (fromIntegral b)) : tail p)
+  liftIO $ setColors bb hp 0
   return ()
 
 pal :: Word16 -> Emu ()

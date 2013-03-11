@@ -26,7 +26,8 @@ data EmuState = EmuState
   , _spriteSize :: {-# UNPACK #-}!( Word8, Word8 )
   , _vblank :: !Bool
   , _palette :: ![ Color ]
-  , surface :: Surface
+  , frontBuffer :: Surface
+  , backBuffer :: Surface
   , regs :: IOUArray Word8 Word16
   , memory :: IOUArray Word16 Word8
   }

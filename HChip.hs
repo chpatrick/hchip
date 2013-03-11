@@ -35,19 +35,20 @@ main' f = do
   case loadAssembly rom of
     Left e -> putStrLn ("Problem parsing ROM: " ++ e)
     Right a -> do 
-      surf <- initSDL
-      s <- initState a surf
+      ( fb, bb ) <- initSDL
+      s <- initState a fb bb
       rng <- getStdGen
       evalStateT (evalRandT (runEmu mainLoop) rng) s
       liftIO $ putStrLn ""
       quit
 
-initSDL :: IO Surface
+initSDL :: IO ( Surface, Surface )
 initSDL = do 
   SDL.init [ InitVideo ]
-  s <- setVideoMode 320 240 8 [ HWSurface, DoubleBuf, HWPalette ]
-  setColors s defaultPalette 0
-  return s
+  fb <- setVideoMode 320 240 32 [ HWSurface ]
+  bb <- createRGBSurface [ SWSurface ] 320 240 8 0xFF 0xFF 0xFF 0xFF
+  setColors bb defaultPalette 0
+  return ( fb, bb )
 
 processEvents :: Emu Bool
 processEvents = do
@@ -65,19 +66,21 @@ mainLoop = do
 
 frame :: Emu ()
 frame = do
-  s <- gets surface
+  fb <- gets frontBuffer
+  bb <- gets backBuffer
   t1 <- liftIO $ getTime Monotonic
   replicateM_ 16000 cpuStep
-  liftIO $ unlockSurface s
-  liftIO $ SDL.flip s
-  liftIO $ lockSurface s
+  liftIO $ unlockSurface bb
+  liftIO $ blitSurface bb Nothing fb Nothing
+  liftIO $ SDL.flip fb
+  liftIO $ lockSurface bb
   vblank .= True
   t2 <- liftIO $ getTime Monotonic
   liftIO $ printf "\r%.2f FPS" ((1 :: Double) / (fromIntegral (nsec t2 - nsec t1) / 1e9))
   liftIO $ hFlush stdout
 
-initState :: Assembly -> Surface -> IO EmuState
-initState Assembly { rom = rom, start = start } s = do
+initState :: Assembly -> Surface -> Surface -> IO EmuState
+initState Assembly { rom = rom, start = start } fb bb = do
   regs <- newArray (0x0, 0xf) 0
   mem <- newListArray (0x0000, 0xFFFF) (BS.unpack rom ++ replicate (0x10000 - BS.length rom) 0)
 
@@ -90,7 +93,8 @@ initState Assembly { rom = rom, start = start } s = do
     , _bgc = 0
     , _vblank = False
     , _palette = defaultPalette
-    , surface = s
+    , frontBuffer = fb
+    , backBuffer = bb
     , regs = regs
     , memory = mem
     }
