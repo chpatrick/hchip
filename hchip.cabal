@@ -4,9 +4,15 @@ Description:         Chip16 emulator
 Author:              Patrick Chilton
 Maintainer:          chpatrick@gmail.com
 Build-Type:          Simple
-Cabal-Version:       >=1.2
+Cabal-Version:       >=1.8
+
+Library
+  Build-Depends:     base, SDL
+  Exposed-Modules:   Graphics.UI.SDL.Audio.Open
+  Include-Dirs:      /usr/include/SDL
+  Extra-Libraries:   SDL
 
 Executable hchip
   Main-Is:           HChip.hs
-  Build-Depends:     base, digest, binary > 0.7, lens, SDL, array, mtl, MonadRandom, bytestring, random, clock
-  ghc-options:       -O2
+  Build-Depends:     base, digest, binary > 0.7, lens, SDL, array, mtl, MonadRandom, bytestring, random, clock, hchip
+  Ghc-Options:       -O2

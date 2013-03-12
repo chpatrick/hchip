@@ -11,6 +11,7 @@ import HChip.Machine
 import HChip.CPU
 import HChip.ALU
 import HChip.Graphics
+import HChip.Sound
 
 genOps :: IO (IOArray Word8 (Maybe Instruction))
 genOps = do
