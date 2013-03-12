@@ -8,5 +8,5 @@ Cabal-Version:       >=1.2
 
 Executable hchip
   Main-Is:           HChip.hs
-  Build-Depends:     base, digest, binary > 0.7, lens, SDL, array, mtl, MonadRandom, bytestring, random, clock
+  Build-Depends:     base, digest, binary > 0.7, lens, SDL, array, mtl, MonadRandom, bytestring, random, clock, vector
   ghc-options:       -O2

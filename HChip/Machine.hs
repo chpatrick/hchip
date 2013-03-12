@@ -7,7 +7,8 @@ import Control.Lens
 import Control.Monad.Identity
 import Control.Monad.Random
 import Control.Monad.State.Strict
-import Data.Array.IO
+import Data.Vector.Mutable as V
+import Data.Vector.Unboxed.Mutable as UV
 import Data.Bits
 import Data.Bits.Lens
 import Data.Word
@@ -45,9 +46,9 @@ data EmuState = EmuState
   , _palette :: ![ Color ]
   , frontBuffer :: Surface
   , backBuffer :: Surface
-  , regs :: IOUArray Word8 Word16
-  , memory :: IOUArray Word16 Word8
-  , opTable :: IOArray Word8 (Maybe Instruction)
+  , regs :: UV.IOVector Word16
+  , memory :: UV.IOVector Word8
+  , opTable :: V.IOVector (Maybe Instruction)
   }
 
 makeLenses ''EmuState
@@ -106,12 +107,12 @@ data Flags = Flags
 instance Loadable16 Register where
   load16 (Reg n) = do
     rs <- gets regs
-    liftIO $ readArray rs n
+    liftIO $ UV.read rs (fromIntegral n)
 
 instance Savable16 Register where
   save16 (Reg n) v = do
     rs <- gets regs
-    liftIO $ writeArray rs n v
+    liftIO $ UV.write rs (fromIntegral n) v
 
 instance Loadable16 PC where
   load16 PC = use pc
@@ -134,12 +135,12 @@ instance Savable8 Flags where
 instance Loadable8 Memory where
   load8 (Mem a) = do
     m <- gets memory
-    liftIO $ readArray m a
+    liftIO $ UV.read m (fromIntegral a)
 
 instance Savable8 Memory where
   save8 (Mem a) v = when (a < 0xFFF0) $ do -- no writing to IO ports
     m <- gets memory
-    liftIO $ writeArray m a v
+    liftIO $ UV.write m (fromIntegral a) v
 
 instance Loadable16 Memory where
   load16 (Mem a) = do

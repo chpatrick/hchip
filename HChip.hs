@@ -10,7 +10,8 @@ import Control.Monad.Identity
 import Control.Monad.Random
 import Control.Monad.State.Strict
 import Control.Monad.Trans
-import Data.Array.IO
+import Data.Vector.Mutable as V
+import Data.Vector.Unboxed.Mutable as UV
 import Data.Word
 import Graphics.UI.SDL as SDL
 import Text.Printf
@@ -68,8 +69,8 @@ setPad s (Keysym k _ _) = let l = case k of {
     Nothing -> return ()
     Just l -> do
       m <- gets memory
-      p <- liftIO $ readArray m 0xFFF0
-      liftIO $ writeArray m 0xFFF0 (p & l .~ s)
+      p <- liftIO $ UV.read m 0xFFF0
+      liftIO $ UV.write m 0xFFF0 (p & l .~ s)
 
 processEvents :: Emu Bool
 processEvents = do
@@ -92,7 +93,7 @@ frame = do
   fb <- gets frontBuffer
   bb <- gets backBuffer
   t1 <- liftIO $ getTime Monotonic
-  replicateM_ 4000 cpuStep
+  replicateM_ 16667 cpuStep
   liftIO $ unlockSurface bb
   liftIO $ blitSurface bb Nothing fb Nothing
   liftIO $ SDL.flip fb
@@ -104,8 +105,9 @@ frame = do
 
 initState :: Assembly -> Surface -> Surface -> IO EmuState
 initState Assembly { rom = rom, start = start } fb bb = do
-  regs <- newArray (0x0, 0xf) 0
-  mem <- newListArray (0x0000, 0xFFFF) (BS.unpack rom ++ replicate (0x10000 - BS.length rom) 0)
+  regs <- UV.replicate 0x10 0
+  mem <- UV.replicate 0x10000 0 -- newListArray (0x0000, 0xFFFF) (BS.unpack rom ++ replicate (0x10000 - BS.length rom) 0)
+  zipWithM_ (UV.write mem) [0..] (BS.unpack rom)
   ot <- genOps
 
   return EmuState
@@ -129,7 +131,7 @@ cpuStep = {-# SCC "cpuStep" #-} do
   pc .= p + 4
   (oc : ib) <- forM [0..3] (\o -> load8 (Mem (p + o)))  
   ot <- gets opTable
-  i <- liftIO (readArray ot oc)
+  i <- liftIO (V.read ot (fromIntegral oc))
   case i of
     Nothing -> debug $ printf "<unimplemented %02x>" oc
     Just (Instruction { parser = p, exec = e, printer = pr }) -> do

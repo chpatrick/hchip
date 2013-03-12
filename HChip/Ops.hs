@@ -1,7 +1,7 @@
 module HChip.Ops (genOps) where
 
 import Data.Array hiding ((//))
-import Data.Array.IO
+import Data.Vector.Mutable as V
 import Data.Word
 import Control.Lens
 import Control.Applicative
@@ -12,10 +12,10 @@ import HChip.CPU
 import HChip.ALU
 import HChip.Graphics
 
-genOps :: IO (IOArray Word8 (Maybe Instruction))
+genOps :: IO ( IOVector ( Maybe Instruction ) )
 genOps = do
-  ot <- newArray (0x00, 0xFF) Nothing
-  forM_ ops (\(oc, i) -> oc `seq` i `seq` writeArray ot oc (Just i))
+  ot <- V.replicate 0x100 Nothing
+  forM_ ops (\(oc, i) -> oc `seq` i `seq` V.write ot (fromIntegral oc) (Just i))
   return ot
 
 ops :: [ ( Word8, Instruction ) ]
