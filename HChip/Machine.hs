@@ -3,6 +3,7 @@
 module HChip.Machine where
 
 import Control.Applicative
+import Control.Concurrent.MVar
 import Control.Lens
 import Control.Monad.Identity
 import Control.Monad.Random
@@ -34,6 +35,28 @@ data Instruction = forall ts. Instruction
   , exec     :: Args ts -> Emu ()
   }
 
+
+-- SOUND
+
+data Waveform = Triangle | Sawtooth | Pulse | Noise
+  deriving (Show)
+
+data Tone = Tone
+  { attack :: !Word8
+  , decay :: !Word8
+  , sustain :: !Word8 
+  , release :: !Word8 
+  , volume :: !Word8  
+  , wave :: !Waveform
+  } deriving (Show)
+
+data Sound = NoSound | Sound
+  { frequency :: !Int
+  , totalSamples :: !Int
+  , elapsedSamples :: !Int
+  , tone :: !Tone
+  } deriving (Show)
+
 data EmuState = EmuState
   { _pc :: !Word16
   , _sp :: !Word16
@@ -43,6 +66,7 @@ data EmuState = EmuState
   , _spriteSize :: !( Word8, Word8 )
   , _vblank :: !Bool
   , _palette :: ![ Color ]
+  , sound :: MVar Sound
   , frontBuffer :: Surface
   , backBuffer :: Surface
   , regs :: IOUArray Word8 Word16

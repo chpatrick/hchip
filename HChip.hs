@@ -4,6 +4,7 @@ module Main where
 
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BSL
+import Control.Concurrent.MVar
 import Control.Lens
 import Control.Monad
 import Control.Monad.Identity
@@ -19,11 +20,12 @@ import System.IO
 import System.Environment
 import System.Random
 
-import HChip.Loader
-import HChip.Machine
 import HChip.CPU
 import HChip.Debug
+import HChip.Loader
+import HChip.Machine
 import HChip.Ops
+import HChip.Sound
 import HChip.Util
 
 main = do
@@ -46,7 +48,7 @@ main' f = do
 
 initSDL :: IO ( Surface, Surface )
 initSDL = do 
-  SDL.init [ InitVideo ]
+  SDL.init [ InitVideo, InitAudio ]
   fb <- setVideoMode 320 240 32 [ HWSurface ]
   bb <- createRGBSurface [ SWSurface ] 320 240 8 0xFF 0xFF 0xFF 0xFF
   setColors bb defaultPalette 0
@@ -107,6 +109,7 @@ initState Assembly { rom = rom, start = start } fb bb = do
   regs <- newArray (0x0, 0xf) 0
   mem <- newListArray (0x0000, 0xFFFF) (BS.unpack rom ++ replicate (0x10000 - BS.length rom) 0)
   ot <- genOps
+  sd <- initSound
 
   return EmuState
     { _pc = start
@@ -117,6 +120,7 @@ initState Assembly { rom = rom, start = start } fb bb = do
     , _bgc = 0
     , _vblank = False
     , _palette = defaultPalette
+    , sound = sd
     , frontBuffer = fb
     , backBuffer = bb
     , regs = regs
