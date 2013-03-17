@@ -47,7 +47,7 @@ drw rx ry a = do
     let sx2 = flipCoord fh (fromIntegral w * 2) (fromIntegral x * 2 + 1) + fromIntegral x0
     let sy = fromIntegral (flipCoord fv h y) + fromIntegral y0
     setPixel scan0 pitch sx1 sy (highNibble pp)
-    setPixel scan0 pitch sx2 sy (highNibble pp)
+    setPixel scan0 pitch sx2 sy (lowNibble pp)
 
 updatePalette :: Emu ()
 updatePalette = do
