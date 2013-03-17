@@ -19,13 +19,13 @@ import HChip.Machine
 import HChip.Util
 
 audioSamples :: Word64
-audioSamples = 8192
+audioSamples = 16384
 
 sampleRate :: Word64
 sampleRate = 22050
 
 wavefunc :: Tone -> Wavefunc
-wavefunc Simple = sawtooth
+wavefunc Simple = triangle
 wavefunc ADSR { wave = Sawtooth } = sawtooth
 wavefunc ADSR { wave = Triangle } = triangle
 wavefunc ADSR { wave = Pulse    } = pulse
@@ -71,6 +71,8 @@ cutPlan t (s : ss)
     where
       cv = step s t
 
+planLength = sum . map stepTime
+
 planVolumes = concatMap (\s -> map (step s) [1..stepTime s])
 
 initSound :: IO (MVar (Maybe Sound))
@@ -104,7 +106,7 @@ fillBuf sd b l = modifyMVar_ sd fillBuf'
       let ( sp', sp'' ) = cutPlan (fromIntegral l) (soundPlan s)
       let vs = planVolumes sp'
       let es = elapsedSamples s
-      let sc = fromIntegral $ length vs
+      let sc = planLength sp'
       ws <- mapM (waveform s) [es..es + sc - 1]
       let ss = zipWith (\v w -> round (v * w)) vs ws ++ replicate (l - fromIntegral sc) 0
       pokeArray b ss
@@ -114,7 +116,7 @@ fillBuf sd b l = modifyMVar_ sd fillBuf'
 
 killSound :: Emu ()
 killSound = do
---  liftIO $ pauseAudio True
+  liftIO $ pauseAudio True
   sd <- gets sound
   liftIO $ putMVar sd Nothing
 
@@ -123,9 +125,8 @@ play f t = do
   sd <- gets sound
   tn <- use tone
   let sp = genPlan (fromIntegral t) tn
-  liftIO $ print t
-  liftIO $ print sp
-  liftIO $ swapMVar sd $ Just Sound {elapsedSamples = 0, soundPlan = sp, waveform = wavefunc tn (fromIntegral f) }
+  let w = wavefunc tn (fromIntegral f)
+  liftIO $ swapMVar sd $ Just Sound {elapsedSamples = 0, soundPlan = sp, waveform = w }
   liftIO $ pauseAudio False
 
 sng :: Word8 -> Word16 -> Emu ()
@@ -138,5 +139,4 @@ sng ad vtsr = do
     , sustain = fromIntegral (nibble 1 vtsr) / 16
     , release = lowNibble vtsr
     }  
-  liftIO $ print t
   tone .= t
