@@ -38,24 +38,31 @@ data Instruction = forall ts. Instruction
 
 -- SOUND
 
-data Waveform = Triangle | Sawtooth | Pulse | Noise
-  deriving (Show)
+type SoundPlan = [ SoundStep ]
 
-data Tone = Tone
+data SoundStep = SoundStep 
+  { stepTime  :: !Word64
+  , stepStart :: Double
+  , stepEnd   :: Double
+  } deriving Show
+
+data Waveform = Triangle | Sawtooth | Pulse | Noise
+  deriving (Show, Enum)
+
+data Tone = Simple | ADSR
   { attack :: !Word8
   , decay :: !Word8
-  , sustain :: !Word8 
-  , release :: !Word8 
-  , volume :: !Word8  
+  , sustain :: !Double
+  , release :: !Word8
+  , volume :: !Double
   , wave :: !Waveform
   } deriving (Show)
 
-data Sound = NoSound | Sound
-  { frequency :: !Int
-  , totalSamples :: !Int
-  , elapsedSamples :: !Int
-  , tone :: !Tone
-  } deriving (Show)
+data Sound = Sound
+  { waveform :: Word64 -> Double
+  , elapsedSamples :: !Word64
+  , soundPlan :: SoundPlan
+  }
 
 data EmuState = EmuState
   { _pc :: !Word16
@@ -66,7 +73,8 @@ data EmuState = EmuState
   , _spriteSize :: !( Word8, Word8 )
   , _vblank :: !Bool
   , _palette :: ![ Color ]
-  , sound :: MVar Sound
+  , sound :: MVar (Maybe Sound)
+  , _tone :: Tone
   , frontBuffer :: Surface
   , backBuffer :: Surface
   , regs :: IOUArray Word8 Word16

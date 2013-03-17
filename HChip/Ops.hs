@@ -40,7 +40,7 @@ ops = (
   , i 0x0C "SND3" imm (play 1500)
   , i 0x0D "SNP" (r x // imm) (\rx t -> load16 rx >>= (`play`t))
 
-  , u 0x0E "SNG" (ad // imm)
+  , i 0x0E "SNG" (ad // imm) sng
 
   , i 0x10 "JMP" imm jmp
   , p 0x12 (condPrinter 'J') (x // imm) (\c a -> whenC c (jmp a))

@@ -10,12 +10,16 @@ import Data.Int
 import Data.Word
 
 {-# INLINE lowNibble #-}
-lowNibble :: (Num a, Bits a) => a -> a
-lowNibble = (.&.)0xF
+lowNibble :: (Integral a, Num a, Bits a) => a -> Word8
+lowNibble x = fromIntegral (x .&. 0xF)
 
 {-# INLINE highNibble #-}
-highNibble :: (Num a, Bits a) => a -> a
-highNibble = lowNibble . (`shiftR`4)
+highNibble :: (Integral a, Num a, Bits a) => a -> Word8
+highNibble = nibble 1
+
+{-# INLINE nibble #-}
+nibble :: (Integral a, Num a, Bits a) => Int -> a -> Word8
+nibble n = lowNibble . (`shiftR`(n * 4))
 
 buildInt :: (Num a, Bits a) => [ Word8 ] -> a
 buildInt = foldr (\v a -> fromIntegral v .|. a `shiftL` 8) 0

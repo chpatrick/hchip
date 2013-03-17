@@ -101,7 +101,7 @@ frame = do
   liftIO $ lockSurface bb
   vblank .= True
   t2 <- liftIO $ getTime Monotonic
-  liftIO $ printf "\r%.2f FPS" ((1 :: Double) / (fromIntegral (nsec t2 - nsec t1) / 1e9))
+  -- liftIO $ printf "\r%.2f FPS" ((1 :: Double) / (fromIntegral (nsec t2 - nsec t1) / 1e9))
   liftIO $ hFlush stdout
 
 initState :: Assembly -> Surface -> Surface -> IO EmuState
@@ -121,6 +121,7 @@ initState Assembly { rom = rom, start = start } fb bb = do
     , _vblank = False
     , _palette = defaultPalette
     , sound = sd
+    , _tone = Simple
     , frontBuffer = fb
     , backBuffer = bb
     , regs = regs
