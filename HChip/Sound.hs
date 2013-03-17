@@ -13,6 +13,7 @@ import Data.Word
 import Foreign.Ptr
 import Foreign.Marshal.Array
 import Graphics.UI.SDL.Audio.Open
+import System.Random
 
 import HChip.Machine
 import HChip.Util
@@ -22,15 +23,13 @@ audioSamples = 8192
 
 sampleRate :: Word64
 sampleRate = 22050
---secPerSample = (1 % sampleRate) :: Ratio Int
 
--- TODO: other waveforms
-wavefunc :: Tone -> Double -> Word64 -> Double
+wavefunc :: Tone -> Wavefunc
 wavefunc Simple = sawtooth
 wavefunc ADSR { wave = Sawtooth } = sawtooth
-wavefunc ADSR { wave = Triangle } = sawtooth
-wavefunc ADSR { wave = Noise    } = sawtooth
-wavefunc ADSR { wave = Pulse    } = sawtooth
+wavefunc ADSR { wave = Triangle } = triangle
+wavefunc ADSR { wave = Pulse    } = pulse
+wavefunc ADSR { wave = Noise    } = noise
 
 attacks :: Array Word8 Word64
 attacks = listArray (0x0, 0xF) [ 2, 8, 16, 24, 38, 56, 68, 80, 100, 250, 500, 800, 1000, 3000, 5000, 8000 ]
@@ -83,8 +82,19 @@ initSound = do
 wavelength :: Double -> Double
 wavelength f = fromIntegral sampleRate / f
 
-sawtooth :: Double -> Word64 -> Double
-sawtooth f t = (fromIntegral t * 256 / wavelength f) `mod'` 256 - 128
+-- WAVEFORMS
+
+sawtooth :: Wavefunc
+sawtooth f t = return $! (fromIntegral t * 256 / wavelength f) `mod'` 256 - 128
+
+triangle :: Wavefunc
+triangle f t = return $! (128 - abs ((fromIntegral t * 512 / wavelength f) `mod'` 512 - 256))
+
+pulse :: Wavefunc
+pulse f t = return $! (signum (fromIntegral t `mod'` wavelength f - wavelength f / 2) * 127)
+
+noise :: Wavefunc
+noise f t = getStdRandom (randomR (-128, 127))
 
 fillBuf :: MVar (Maybe Sound) -> Ptr Word8 -> Int -> IO ()
 fillBuf sd b l = modifyMVar_ sd fillBuf'
@@ -95,7 +105,7 @@ fillBuf sd b l = modifyMVar_ sd fillBuf'
       let vs = planVolumes sp'
       let es = elapsedSamples s
       let sc = fromIntegral $ length vs
-      let ws = map (waveform s) [es..es + sc - 1]
+      ws <- mapM (waveform s) [es..es + sc - 1]
       let ss = zipWith (\v w -> round (v * w)) vs ws ++ replicate (l - fromIntegral sc) 0
       pokeArray b ss
       if null sp''
