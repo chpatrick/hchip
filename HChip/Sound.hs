@@ -99,20 +99,21 @@ noise :: Wavefunc
 noise f t = getStdRandom (randomR (-128, 127))
 
 fillBuf :: MVar (Maybe Sound) -> Ptr Word8 -> Int -> IO ()
-fillBuf sd b l = modifyMVar_ sd fillBuf'
-  where
-    fillBuf' Nothing = pokeArray b (replicate l 0) >> return Nothing
-    fillBuf' (Just s) = do
+fillBuf sd b l = do
+  s <- takeMVar sd
+  case s of
+    Nothing -> pokeArray b (replicate l 0) >> putMVar sd Nothing
+    Just s -> do
       let ( sp', sp'' ) = cutPlan (fromIntegral l) (soundPlan s)
-      let vs = planVolumes sp'
       let es = elapsedSamples s
       let sc = planLength sp'
+      if null sp''
+        then pauseAudio True >> putMVar sd Nothing
+        else putMVar sd $! Just (s { elapsedSamples = es + sc, soundPlan = sp'' })
+      let vs = planVolumes sp'
       ws <- mapM (waveform s) [es..es + sc - 1]
       let ss = zipWith (\v w -> round (v * w)) vs ws ++ replicate (l - fromIntegral sc) 0
       pokeArray b ss
-      if null sp''
-        then pauseAudio True >> return Nothing
-        else return $! Just (s { elapsedSamples = es + sc, soundPlan = sp'' })
 
 killSound :: Emu ()
 killSound = do
