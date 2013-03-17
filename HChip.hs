@@ -95,14 +95,15 @@ frame = do
   bb <- gets backBuffer
   t1 <- liftIO $ getTime Monotonic
   replicateM_ 4000 cpuStep
-  liftIO $ unlockSurface bb
-  liftIO $ blitSurface bb Nothing fb Nothing
-  liftIO $ SDL.flip fb
-  liftIO $ lockSurface bb
-  vblank .= True
+  liftIO $ do
+    unlockSurface bb
+    blitSurface bb Nothing fb Nothing
+    SDL.flip fb
+    lockSurface bb
   t2 <- liftIO $ getTime Monotonic
-  -- liftIO $ printf "\r%.2f FPS" ((1 :: Double) / (fromIntegral (nsec t2 - nsec t1) / 1e9))
+  liftIO $ printf "\r%.2f FPS" ((1 :: Double) / (fromIntegral (nsec t2 - nsec t1) / 1e9))
   liftIO $ hFlush stdout
+  vblank .= True
 
 initState :: Assembly -> Surface -> Surface -> IO EmuState
 initState Assembly { rom = rom, start = start } fb bb = do

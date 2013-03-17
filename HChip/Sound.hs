@@ -116,9 +116,11 @@ fillBuf sd b l = modifyMVar_ sd fillBuf'
 
 killSound :: Emu ()
 killSound = do
-  liftIO $ pauseAudio True
   sd <- gets sound
-  liftIO $ putMVar sd Nothing
+  liftIO $ do 
+    takeMVar sd
+    pauseAudio True -- we should be in control of sound when pausing
+    putMVar sd Nothing
 
 play :: Word16 -> Word16 -> Emu ()
 play f t = do
@@ -126,8 +128,10 @@ play f t = do
   tn <- use tone
   let sp = genPlan (fromIntegral t) tn
   let w = wavefunc tn (fromIntegral f)
-  liftIO $ swapMVar sd $ Just Sound {elapsedSamples = 0, soundPlan = sp, waveform = w }
-  liftIO $ pauseAudio False
+  liftIO $ do
+    takeMVar sd
+    pauseAudio False
+    putMVar sd $ Just Sound {elapsedSamples = 0, soundPlan = sp, waveform = w }
 
 sng :: Word8 -> Word16 -> Emu ()
 sng ad vtsr = do
