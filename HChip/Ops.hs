@@ -38,7 +38,7 @@ ops = (
   , i 0x0A "SND1" imm (play 500)
   , i 0x0B "SND2" imm (play 1000)
   , i 0x0C "SND3" imm (play 1500)
-  , i 0x0D "SNP" (r x // imm) (\rx t -> load16 rx >>= (`play`t))
+  , i 0x0D "SNP" (r x // imm) (\rx t -> Mem <$> load16 rx >>= load16 >>= (`play`t))
 
   , i 0x0E "SNG" (ad // imm) sng
 
