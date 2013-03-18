@@ -51,7 +51,7 @@ timeToSamples t = t * sampleRate `div` 1000
 
 genPlan :: Word64 -> Tone -> SoundPlan
 genPlan tm Simple = [ SoundStep (timeToSamples tm) 1 1 ]
-genPlan tm ADSR { attack = a, decay = d, sustain = s, release = r, volume = v } = 
+genPlan tm ADSR { attack = a, decay = d, sustain = s, release = r, volume = v } = fst $ cutPlan tt
   [ SoundStep at 0 v
   , SoundStep dt v s
   , SoundStep st s s
