@@ -98,14 +98,12 @@ pulse :: Double -> Word64 -> Double
 pulse f t = signum (fromIntegral t `mod'` wavelength f - wavelength f / 2) * 127
 
 noise :: IORef Double -> Word64 -> Word64 -> IO Double
-noise sr wl t = do
-  if t `mod` wl == 0
-    then do
-      s <- getStdRandom (randomR (-128, 127))
-      writeIORef sr s
-      return s
-    else
-      readIORef sr
+noise sr wl t
+  | t `mod ` wl == 0 = do
+    s <- getStdRandom (randomR (-128, 127))
+    writeIORef sr s
+    return s
+  | otherwise = readIORef sr
 
 fillBuf :: MVar (Maybe Sound) -> Ptr Word8 -> Int -> IO ()
 fillBuf sd b l = do
@@ -133,12 +131,12 @@ killSound = do
     putMVar sd Nothing
 
 play :: Word16 -> Word16 -> Emu ()
-play f t = when (f /= 0) $ do -- ignore frequency 0
+play f t = unless (f == 0 || t == 0) $ do
   sd <- gets sound
   tn <- use tone
   let sp = genPlan (fromIntegral t) tn
-  w <- liftIO $ wavefunc tn (fromIntegral f)
   liftIO $ do
+    w <- wavefunc tn (fromIntegral f)
     takeMVar sd
     pauseAudio False
     putMVar sd $ Just Sound {elapsedSamples = 0, soundPlan = sp, waveform = w }

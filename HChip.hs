@@ -141,10 +141,7 @@ cpuStep = {-# SCC "cpuStep" #-} do
     Just (Instruction { parser = p, exec = e, printer = pr }) -> do
       let as = p ib
 --      liftIO $ putStrLn $ runIdentity $ pr as
---      liftIO $ getChar
       e as
---      dumpState
---      liftIO $ putStrLn ""
 
 defaultPalette = map toColor (
   [ 0x000000 -- (Black, Transparent in foreground layer)
