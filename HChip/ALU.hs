@@ -105,7 +105,7 @@ checkNegative x = negative .= (sign x < 0)
 
 -- undefined behavior on divide by zero
 div :: AluFunc
-div = signed $ \x y -> if x == 0 then return 0 else do
+div = signed $ \x y -> if y == 0 then return 0 else do
   let (q, r) = x `quotRem` y
   carry .= (r /= 0)
   return q
