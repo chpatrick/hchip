@@ -49,8 +49,6 @@ data SoundStep = SoundStep
 data Waveform = Triangle | Sawtooth | Pulse | Noise
   deriving (Show, Enum)
 
-type Wavefunc = Double -> Word64 -> IO Double
-
 data Tone = Simple | ADSR
   { attack :: !Word8
   , decay :: !Word8

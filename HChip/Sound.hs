@@ -24,12 +24,14 @@ audioSamples = 16384
 sampleRate :: Word64
 sampleRate = 22050
 
-wavefunc :: Tone -> Wavefunc
-wavefunc Simple = triangle
-wavefunc ADSR { wave = Sawtooth } = sawtooth
-wavefunc ADSR { wave = Triangle } = triangle
-wavefunc ADSR { wave = Pulse    } = pulse
-wavefunc ADSR { wave = Noise    } = noise
+wavefunc :: Tone -> Double -> IO (Word64 -> IO Double)
+wavefunc Simple f = return (\t -> return (triangle f t))
+wavefunc ADSR { wave = Sawtooth } f = return (\t -> return (sawtooth f t))
+wavefunc ADSR { wave = Triangle } f = return (\t -> return (triangle f t))
+wavefunc ADSR { wave = Pulse    } f = return (\t -> return (pulse f t))
+wavefunc ADSR { wave = Noise    } f = do
+  sr <- newIORef 0
+  return (noise sr (round (wavelength f)))
 
 attacks :: Array Word8 Word64
 attacks = listArray (0x0, 0xF) [ 2, 8, 16, 24, 38, 56, 68, 80, 100, 250, 500, 800, 1000, 3000, 5000, 8000 ]
@@ -86,17 +88,24 @@ wavelength f = fromIntegral sampleRate / f
 
 -- WAVEFORMS
 
-sawtooth :: Wavefunc
-sawtooth f t = return $! (fromIntegral t * 256 / wavelength f) `mod'` 256 - 128
+sawtooth :: Double -> Word64 -> Double
+sawtooth f t = (fromIntegral t * 256 / wavelength f) `mod'` 256 - 128
 
-triangle :: Wavefunc
-triangle f t = return $! (128 - abs ((fromIntegral t * 512 / wavelength f) `mod'` 512 - 256))
+triangle :: Double -> Word64 -> Double
+triangle f t = 128 - abs ((fromIntegral t * 512 / wavelength f) `mod'` 512 - 256)
 
-pulse :: Wavefunc
-pulse f t = return $! (signum (fromIntegral t `mod'` wavelength f - wavelength f / 2) * 127)
+pulse :: Double -> Word64 -> Double
+pulse f t = signum (fromIntegral t `mod'` wavelength f - wavelength f / 2) * 127
 
-noise :: Wavefunc
-noise f t = getStdRandom (randomR (-128, 127))
+noise :: IORef Double -> Word64 -> Word64 -> IO Double
+noise sr wl t = do
+  if t `mod` wl == 0
+    then do
+      s <- getStdRandom (randomR (-128, 127))
+      writeIORef sr s
+      return s
+    else
+      readIORef sr
 
 fillBuf :: MVar (Maybe Sound) -> Ptr Word8 -> Int -> IO ()
 fillBuf sd b l = do
@@ -124,11 +133,11 @@ killSound = do
     putMVar sd Nothing
 
 play :: Word16 -> Word16 -> Emu ()
-play f t = do
+play f t = when (f /= 0) $ do -- ignore frequency 0
   sd <- gets sound
   tn <- use tone
   let sp = genPlan (fromIntegral t) tn
-  let w = wavefunc tn (fromIntegral f)
+  w <- liftIO $ wavefunc tn (fromIntegral f)
   liftIO $ do
     takeMVar sd
     pauseAudio False
@@ -136,12 +145,12 @@ play f t = do
 
 sng :: Word8 -> Word16 -> Emu ()
 sng ad vtsr = do
-  let t = ADSR {
-      attack = highNibble ad
-    , decay = lowNibble vtsr
-    , volume = fromIntegral (nibble 3 vtsr) / 16
-    , wave = toEnum $ fromIntegral $ nibble 2 vtsr
-    , sustain = fromIntegral (nibble 1 vtsr) / 16
-    , release = lowNibble vtsr
-    }  
-  tone .= t
+  let w = fromIntegral (nibble 2 vtsr)
+  when (0x00 <= w && w <= 0x04) $ tone .= ADSR {
+        attack = highNibble ad
+      , decay = lowNibble ad
+      , sustain = fromIntegral (nibble 3 vtsr) / 0xF
+      , release = (nibble 2 vtsr)
+      , volume = fromIntegral (lowNibble vtsr) / 0xF
+      , wave = toEnum w
+      }  
