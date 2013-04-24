@@ -19,7 +19,7 @@ import HChip.Machine
 import HChip.Util
 
 audioSamples :: Word64
-audioSamples = 16384
+audioSamples = 4096
 
 sampleRate :: Word64
 sampleRate = 22050

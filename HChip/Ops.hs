@@ -30,7 +30,7 @@ ops = (
   , i 0x04 "SPR" (ll // hh) (curry (assign spriteSize))
   , i 0x05 "DRW" (r x // r y // imm) drw
   , i 0x06 "DRW" (r x // r y // r z) (\x y -> load16 >=> drw x y)
-  , i 0x07 "RND" (r x // imm) (\rx m -> getRandomR (0, m + 1) >>= save16 rx)
+  , i 0x07 "RND" (r x // imm) (\rx m -> getRandomR ( 0, m ) >>= save16 rx)
 
   , i 0x08 "FLIP" (b 2 1 // b 2 0) (curry (assign spriteFlip))
 
@@ -66,7 +66,7 @@ ops = (
   
   , i 0xC0 "PUSH" (r x) (load16 >=> push)
   , i 0xC1 "POP" (r x) (\rx -> pop >>= save16 rx)
-  -- TODO: very slight optimizations to these four
+
   , i 0xC2 "PUSHALL" nullary (forM_ [0x0..0xf] (\r -> load16 (Reg r) >>= push))
   , i 0xC3 "POPALL" nullary (forM_ [0xf,0xe..0x0] (\r -> pop >>= save16 (Reg r)))
   , i 0xC4 "PUSHF" nullary (fromIntegral <$> use flags >>= push)

@@ -55,8 +55,7 @@ updatePalette = do
   p <- use palette
   fb <- gets frontBuffer
   bb <- gets backBuffer
-  let hp  = ((p !! (fromIntegral b)) : tail p)
-  liftIO $ setColors bb hp 0
+  liftIO $ setColors bb ((p !! fromIntegral b) : tail p) 0
   return ()
 
 pal :: Word16 -> Emu ()
