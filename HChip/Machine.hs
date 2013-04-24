@@ -6,18 +6,18 @@ import Control.Applicative
 import Control.Concurrent.MVar
 import Control.Lens
 import Control.Monad.Identity
-import Control.Monad.Random
 import Control.Monad.State.Strict
 import Data.Array.IO
 import Data.Bits
 import Data.Bits.Lens
 import Data.Word
 import Graphics.UI.SDL
+import System.Random
 
 import HChip.Util
 
-newtype Emu a = Emu { runEmu :: RandT StdGen (StateT EmuState IO) a }
-  deriving (Monad, MonadState EmuState, MonadIO, MonadRandom, Functor, Applicative)
+newtype Emu a = Emu { runEmu :: StateT EmuState IO a }
+  deriving (Monad, MonadState EmuState, MonadIO, Functor, Applicative)
 
 -- INSTRUCTIONS
 data Args ts where
@@ -80,6 +80,7 @@ data EmuState = EmuState
   , regs :: IOUArray Word8 Word16
   , memory :: IOUArray Word16 Word8
   , opTable :: IOArray Word8 (Maybe Instruction)
+  , _prng :: StdGen
   }
 
 makeLenses ''EmuState

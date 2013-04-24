@@ -6,7 +6,8 @@ import Data.Word
 import Control.Lens
 import Control.Applicative
 import Control.Monad
-import Control.Monad.Random
+import System.Random
+
 import HChip.Machine
 import HChip.CPU
 import HChip.ALU
@@ -30,7 +31,7 @@ ops = (
   , i 0x04 "SPR" (ll // hh) (curry (assign spriteSize))
   , i 0x05 "DRW" (r x // r y // imm) drw
   , i 0x06 "DRW" (r x // r y // r z) (\x y -> load16 >=> drw x y)
-  , i 0x07 "RND" (r x // imm) (\rx m -> getRandomR ( 0, m ) >>= save16 rx)
+  , i 0x07 "RND" (r x // imm) (\rx m -> prng %%= randomR ( 0, m ) >>= save16 rx)
 
   , i 0x08 "FLIP" (b 2 1 // b 2 0) (curry (assign spriteFlip))
 

@@ -14,5 +14,5 @@ Library
 
 Executable hchip
   Main-Is:           HChip.hs
-  Build-Depends:     base, digest, binary > 0.7, lens, SDL, array, mtl, MonadRandom, bytestring, random, clock, hchip
+  Build-Depends:     base, digest, binary > 0.7, lens, SDL, array, mtl, random, bytestring, clock, hchip
   Ghc-Options:       -O2 -threaded

@@ -8,7 +8,6 @@ import Control.Concurrent.MVar
 import Control.Lens
 import Control.Monad
 import Control.Monad.Identity
-import Control.Monad.Random
 import Control.Monad.State.Strict
 import Control.Monad.Trans
 import Data.Array.IO
@@ -41,8 +40,7 @@ main' f = do
     Right a -> do 
       ( fb, bb ) <- initSDL
       s <- initState a fb bb
-      rng <- getStdGen
-      evalStateT (evalRandT (runEmu mainLoop) rng) s
+      evalStateT (runEmu mainLoop) s
       liftIO $ putStrLn ""
       quit
 
@@ -94,7 +92,7 @@ frame = do
   fb <- gets frontBuffer
   bb <- gets backBuffer
   t1 <- liftIO $ getTime Monotonic
-  replicateM_ 4000 cpuStep
+  replicateM_ 16667 cpuStep
   liftIO $ do
     unlockSurface bb
     blitSurface bb Nothing fb Nothing
@@ -111,6 +109,7 @@ initState Assembly { rom = rom, start = start } fb bb = do
   mem <- newListArray (0x0000, 0xFFFF) (BS.unpack rom ++ replicate (0x10000 - BS.length rom) 0)
   ot <- genOps
   sd <- initSound
+  prng <- getStdGen
 
   return EmuState
     { _pc = start
@@ -128,6 +127,7 @@ initState Assembly { rom = rom, start = start } fb bb = do
     , regs = regs
     , memory = mem
     , opTable = ot
+    , _prng = prng
     }
 
 cpuStep = {-# SCC "cpuStep" #-} do
