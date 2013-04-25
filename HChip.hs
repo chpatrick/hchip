@@ -92,8 +92,8 @@ frame :: Emu ()
 frame = do
   fb <- gets frontBuffer
   bb <- gets backBuffer
-  t1 <- liftIO $ time
   d <- use delayTime
+  t1 <- liftIO $ time
   replicateM_ 16667 cpuStep
   liftIO $ do
     unlockSurface bb
@@ -104,7 +104,7 @@ frame = do
   t2 <- liftIO $ time
   let elapsed = t2 - t1
   let delayError = 1000000 `div` 60 - fromIntegral (elapsed `div` 1000)
-  delayTime .= max 0 (d + delayError `div` 10)
+  delayTime .= max 0 (d + delayError `div` 80)
   liftIO $ printf "\r%.2f FPS" ((1 :: Double) / (fromIntegral elapsed / 1e9))
   liftIO $ hFlush stdout
   vblank .= True
@@ -134,7 +134,7 @@ initState Assembly { rom = rom, start = start } fb bb = do
     , memory = mem
     , opTable = ot
     , _prng = prng
-    , _delayTime = 0
+    , _delayTime = 8000
     }
 
 cpuStep = {-# SCC "cpuStep" #-} do
