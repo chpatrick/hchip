@@ -61,7 +61,7 @@ instance Storable (AudioSpecInternal u f) where
 data AudioSpec f = AudioSpec
   { freq :: Int
   , samples :: Word16
-  , callback :: (Ptr f -> Int -> IO ())
+  , callback :: Ptr f -> Int -> IO ()
   , channels :: Word8
   }
 
@@ -70,7 +70,7 @@ specToInternal s
   = AudioSpecInternal
     { freq' = fromIntegral (freq s)
     , samples' = samples s
-    , callback' = (\u b l -> callback s b (fromIntegral l))
+    , callback' = \u b l -> callback s b (fromIntegral l)
     , channels' = channels s
     , format' = fromAudioFormat $ format (undefined :: f)
     , userdata' = nullPtr
@@ -80,7 +80,7 @@ foreign import ccall "SDL_OpenAudio"
   sdl_openAudio :: Ptr (AudioSpecInternal u f) -> Ptr (AudioSpecInternal u f) -> IO CInt
 
 openAudio :: Sample f => AudioSpec f -> IO ()
-openAudio s = with (specToInternal s) (\sp -> alloca (\op -> void (sdl_openAudio sp op)))
+openAudio s = with (specToInternal s) (\sp -> alloca (void . sdl_openAudio sp))
 
 foreign import ccall "SDL_PauseAudio"
   sdl_pauseAudio :: CInt -> IO ()

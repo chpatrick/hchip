@@ -25,10 +25,10 @@ sampleRate :: Word64
 sampleRate = 22050
 
 wavefunc :: Tone -> Double -> IO (Word64 -> IO Double)
-wavefunc Simple f = return (\t -> return (triangle f t))
-wavefunc ADSR { wave = Sawtooth } f = return (\t -> return (sawtooth f t))
-wavefunc ADSR { wave = Triangle } f = return (\t -> return (triangle f t))
-wavefunc ADSR { wave = Pulse    } f = return (\t -> return (pulse f t))
+wavefunc Simple f = return (return . triangle f)
+wavefunc ADSR { wave = Sawtooth } f = return (return . sawtooth f)
+wavefunc ADSR { wave = Triangle } f = return (return . triangle f)
+wavefunc ADSR { wave = Pulse    } f = return (return . pulse f)
 wavefunc ADSR { wave = Noise    } f = do
   sr <- newIORef 0
   return (noise sr (round (wavelength f)))
@@ -148,7 +148,7 @@ sng ad vtsr = do
         attack = highNibble ad
       , decay = lowNibble ad
       , sustain = fromIntegral (nibble 3 vtsr) / 0xF
-      , release = (nibble 2 vtsr)
+      , release = nibble 2 vtsr
       , volume = fromIntegral (lowNibble vtsr) / 0xF
       , wave = toEnum w
       }  

@@ -1,5 +1,3 @@
-{-# LANGUAGE StandaloneDeriving #-}
-
 module Main where
 
 import qualified Data.ByteString as BS
@@ -93,7 +91,7 @@ frame = do
   fb <- gets frontBuffer
   bb <- gets backBuffer
   d <- use delayTime
-  t1 <- liftIO $ time
+  t1 <- liftIO time
   replicateM_ 16667 cpuStep
   liftIO $ do
     unlockSurface bb
@@ -101,7 +99,7 @@ frame = do
     SDL.flip fb
     lockSurface bb
     when (d > 0) (threadDelay d)
-  t2 <- liftIO $ time
+  t2 <- liftIO time
   let elapsed = t2 - t1
   let delayError = 1000000 `div` 60 - fromIntegral (elapsed `div` 1000)
   delayTime .= max 0 (d + delayError `div` 80)

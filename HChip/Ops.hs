@@ -21,7 +21,7 @@ genOps = do
   return ot
 
 ops :: [ ( Word8, Instruction ) ]
-ops = (
+ops =
   [ i 0x00 "NOP" nullary (return ())
   , i 0x01 "CLS" nullary cls
   , i 0x02 "VBLNK" nullary $ do
@@ -75,7 +75,7 @@ ops = (
 
   , i 0xD0 "PAL" imm pal
   , i 0xD1 "PAL" (r x) (load16 >=> pal)
-  ] ++ aluOps)
+  ] ++ aluOps
 
 jmp = assign pc
 
