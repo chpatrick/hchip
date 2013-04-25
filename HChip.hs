@@ -4,6 +4,7 @@ module Main where
 
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BSL
+import Control.Concurrent
 import Control.Concurrent.MVar
 import Control.Lens
 import Control.Monad
@@ -91,15 +92,20 @@ frame :: Emu ()
 frame = do
   fb <- gets frontBuffer
   bb <- gets backBuffer
-  t1 <- liftIO $ getTime Monotonic
+  t1 <- liftIO $ time
+  d <- use delayTime
   replicateM_ 16667 cpuStep
   liftIO $ do
     unlockSurface bb
     blitSurface bb Nothing fb Nothing
     SDL.flip fb
     lockSurface bb
-  t2 <- liftIO $ getTime Monotonic
-  liftIO $ printf "\r%.2f FPS" ((1 :: Double) / (fromIntegral (nsec t2 - nsec t1) / 1e9))
+    when (d > 0) (threadDelay d)
+  t2 <- liftIO $ time
+  let elapsed = t2 - t1
+  let delayError = 1000000 `div` 60 - fromIntegral (elapsed `div` 1000)
+  delayTime .= max 0 (d + delayError)
+  liftIO $ printf "\r%.2f FPS" ((1 :: Double) / (fromIntegral elapsed / 1e9))
   liftIO $ hFlush stdout
   vblank .= True
 
@@ -128,6 +134,7 @@ initState Assembly { rom = rom, start = start } fb bb = do
     , memory = mem
     , opTable = ot
     , _prng = prng
+    , _delayTime = 0
     }
 
 cpuStep = {-# SCC "cpuStep" #-} do

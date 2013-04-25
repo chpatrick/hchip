@@ -81,6 +81,7 @@ data EmuState = EmuState
   , memory :: IOUArray Word16 Word8
   , opTable :: IOArray Word8 (Maybe Instruction)
   , _prng :: StdGen
+  , _delayTime :: !Int
   }
 
 makeLenses ''EmuState

@@ -8,6 +8,7 @@ import Data.Array.MArray
 import Data.Bits
 import Data.Int
 import Data.Word
+import System.Clock
 
 {-# INLINE lowNibble #-}
 lowNibble :: (Integral a, Num a, Bits a) => a -> Word8
@@ -39,3 +40,8 @@ unsign = fromIntegral
 
 byte :: (Integral a, Bits a) => Int -> a -> Word8
 byte n x = fromIntegral ((x `shiftR` (n * 8)) .&. 0xFF)
+
+time :: IO Word64
+time = do
+	TimeSpec s n <- getTime Monotonic
+	return (fromIntegral s * 1000000000 + fromIntegral n)
