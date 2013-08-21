@@ -157,7 +157,7 @@ instance Loadable16 SP where
   load16 SP = use sp
 
 instance Savable16 SP where
-  save16 SP = assign pc
+  save16 SP = assign sp
 
 instance Loadable8 Flags where
   load8 Flags = use flags
